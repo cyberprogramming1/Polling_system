@@ -4,7 +4,7 @@ from authentication.authentication import Authentication
 from report.report import ReportGenerator
 from user.user import User
 def main():
-    db = PollDatabase(server='DESKTOP-VIKK52P', database='PollingSystem_New')
+    db = PollDatabase(server='WIN-0INPCRQN5J2', database='PollingSystem_New')
     auth = Authentication(db)
     user_handler = User(db)
     
