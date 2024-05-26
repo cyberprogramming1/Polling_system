@@ -1,0 +1,74 @@
+from tabulate import tabulate
+
+class Poll:
+    def __init__(self, db, poll_id=None, question=None):
+        self.db = db
+        self.poll_id = poll_id
+        self.question = question
+
+    def create(self, question):
+        self.db.cursor.execute("INSERT INTO Polls (Question) OUTPUT INSERTED.PollID VALUES (?)", question)
+        self.poll_id = self.db.cursor.fetchone()[0]
+        self.db.commit()
+        self.question = question
+
+    def update(self, new_question):
+        if self.poll_id is None:
+            raise ValueError("Poll ID is not set.")
+        self.db.cursor.execute("UPDATE Polls SET Question = ? WHERE PollID = ?", new_question, self.poll_id)
+        self.db.commit()
+        self.question = new_question
+
+    def delete(self):
+        if self.poll_id is None:
+            raise ValueError("Poll ID is not set.")
+        self.db.cursor.execute("DELETE FROM PollOptions WHERE PollID = ?", self.poll_id)
+        self.db.cursor.execute("DELETE FROM Polls WHERE PollID = ?", self.poll_id)
+        self.db.commit()
+
+    def add_options(self, options):
+        if self.poll_id is None:
+            raise ValueError("Poll ID is not set.")
+        
+        # Check the current number of options for this poll
+        self.db.cursor.execute("SELECT COUNT(*) FROM PollOptions WHERE PollID = ?", self.poll_id)
+        option_count = self.db.cursor.fetchone()[0]
+        
+        if option_count + len(options) > 3:
+            raise ValueError("A poll can have exactly 3 options.")
+
+        for option in options:
+            self.db.cursor.execute("INSERT INTO PollOptions (PollID, OptionText) VALUES (?, ?)", self.poll_id, option)
+        
+        self.db.commit()
+
+    def vote(self, option_id):
+        if self.poll_id is None:
+            raise ValueError("Poll ID is not set.")
+        
+        self.db.cursor.execute("SELECT COUNT(*) FROM PollOptions WHERE PollID = ?", self.poll_id)
+        option_count = self.db.cursor.fetchone()[0]
+        
+        if option_count != 3:
+            raise ValueError("Poll must have exactly 3 options before voting.")
+        
+        self.db.cursor.execute("UPDATE PollOptions SET Votes = Votes + 1 WHERE PollID = ? AND OptionID = ?", self.poll_id, option_id)
+        self.db.commit()
+
+    def choose(self):
+        if self.poll_id is None:
+            raise ValueError("Poll ID is not set.")
+        self.db.cursor.execute("SELECT OptionID, OptionText FROM PollOptions WHERE PollID = ?", self.poll_id)
+        return self.db.cursor.fetchall()
+
+    def show_results(self):
+        if self.poll_id is None:
+            raise ValueError("Poll ID is not set.")
+        self.db.cursor.execute("SELECT OptionText, Votes FROM PollOptions WHERE PollID = ?", self.poll_id)
+        results = self.db.cursor.fetchall()
+        print(tabulate(results, headers=["Option", "Votes"], tablefmt="grid"))
+
+    @staticmethod
+    def show_all(db):
+        db.cursor.execute("SELECT PollID, Question FROM Polls")
+        return db.cursor.fetchall()
