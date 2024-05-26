@@ -62,14 +62,15 @@ class Poll:
         if self.poll_id is None:
             raise ValueError("Poll ID is not set.")
         
-        self.db.cursor.execute("SELECT COUNT(*) FROM PollOptions WHERE PollID = ?", self.poll_id)
+        self.db.cursor.execute("SELECT COUNT(*) FROM PollOptions WHERE PollID = ?", (self.poll_id,))
         option_count = self.db.cursor.fetchone()[0]
         
         if option_count != 3:
             raise ValueError("Poll must have exactly 3 options before voting.")
         
-        self.db.cursor.execute("UPDATE PollOptions SET Votes = Votes + 1 WHERE PollID = ? AND OptionID = ?", self.poll_id, option_id)
+        self.db.cursor.execute("UPDATE PollOptions SET Votes = Votes + 1 WHERE PollID = ? AND OptionID = ?", (self.poll_id, option_id))
         self.db.commit()
+
 
     def choose(self):
         if self.poll_id is None:

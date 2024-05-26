@@ -4,7 +4,7 @@ from authentication.authentication import Authentication
 from report.report import ReportGenerator
 from user.user import User
 def main():
-    db = PollDatabase(server='WIN-0INPCRQN5J2', database='PollingSystem_New')
+    db = PollDatabase(server='DESKTOP-VIKK52P', database='PollingSystem_New')
     auth = Authentication(db)
     user_handler = User(db)
     
@@ -85,29 +85,16 @@ def main():
                 poll.delete()
 
             elif choice == "7":
-    # Poll voting logic
-                if user_id is None:
-                    print("User not authenticated. Please login.")
-                    # Handle user authentication here
-                    username = input("Enter your username: ")
-                    password = input("Enter your password: ")
-                    user_id = auth.login(username, password)
-                    if user_id:
-                        print("Login successful.")
-                    else:
-                        print("Invalid username or password. Please try again.")
-                else:
                     poll_id = int(input("Enter the poll ID: "))
-                    # Get options for the poll
                     poll = Poll(db, poll_id=poll_id)
                     options = poll.choose()
-                    # Display options for user to vote
                     print("Options:")
                     for option_id, option_text in options:
                         print(f"{option_id}. {option_text}")
-                    # Record user vote
                     option_id = int(input("Enter the option ID you want to vote for: "))
-                    user_handler.record_vote(poll_id, option_id, user_id)
+                    poll.vote(option_id)
+                    print("Vote recorded successfully.")
+                    db.commit()  # Commit the transaction after voting
 
 
             elif choice == "8":
